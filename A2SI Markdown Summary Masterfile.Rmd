@@ -1,0 +1,828 @@
+---
+title: "2020 A2SI Data Summary"
+author: "Patrick Bixler & Jessica Jones"
+date: "1/14/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r data20, include=FALSE}
+source("utils1.R")
+```
+
+```{r clean data20, include=FALSE, echo=FALSE}
+
+##Drop some columns we don't need
+drops <- c("CASE.ID",
+           "CALLDATE",
+           "TEL01",
+           "MARKER",
+           "REGION",
+           "FNAME",
+           "LNAME",
+           "RESP_NAME")
+data20 <- data20[,!(names(data20) %in% drops)]
+
+setnames(
+  data20,
+  old = c(
+    "Q1_3",
+    "Q1_5",
+    "Q13_9",
+    "Q13_6",
+    "Q13_8_A1",
+    "Q13_7",
+    "Q13_14",
+    "Q14_1",
+    "Q13_4",
+    "Q13_13"
+  ),
+  new = c(
+    "County",
+    "Zip Code",
+    "Education",
+    "Income",
+    "Race",
+    "Age",
+    "Residence",
+    "Gender",
+    "HouseholdSize",
+    "Political Party"
+  )
+)
+
+# County
+data20$County = car::recode(
+  data20$County,
+  "1 = 'Travis'; 2 = 'Williamson'; 3 ='Hays'; 4='Bastrop' ; 5= 'Caldwell' ; 6 = 'Burnet'"
+)
+data20$County <-
+  factor(
+    data20$County,
+    levels = c("Travis", "Williamson", "Hays", "Bastrop", "Caldwell", "Burnet")
+  )
+
+# Gender
+data20$Gender = car::recode(data20$Gender, "1 = 'Male'; 2 = 'Female'; 3 ='Transgender';9='NR'")
+data20$Gender <-
+  factor(data20$Gender, levels = c("Male", "Female", "Transgender", "NR"))
+
+# Residence
+data20$Residence = car::recode(
+  data20$Residence,
+  "1 = 'Urban'; 2 = 'Suburban'; 3 ='Rural changing to Suburban'; 4='Rural';9='NR'"
+)
+data20$Residence <-
+  factor(
+    data20$Residence,
+    levels = c("Urban", "Suburban", "Rural changing to Suburban", "Rural", "NR")
+  )
+
+# Income: Recode to the Needed Segments
+data20$Income = car::recode(
+  data20$Income,
+  "1='Less than $25,000' ;2='$25,000-$40,000'; 3='$40,000-$50,000';
+                  4='$50,000-$75,000';5='$75,000-$100,000';
+                  6='$100,000-$125,000';7='$125,000-$150,000' ;
+                  8='$150,000-200,000'; 9='Over $200,000';
+                  98='NR';99='NR'"
+)
+
+data20$Income <- as.factor(data20$Income)
+data20$Income <-
+  factor(
+    data20$Income,
+    levels = c(
+      "Less than $25,000",
+      "$25,000-$40,000",
+      "$40,000-$50,000",
+      "$50,000-$75,000",
+      "$75,000-$100,000",
+      "$100,000-$125,000",
+      "$125,000-$150,000",
+      "$150,000-200,000",
+      "Over $200,000"
+    )
+  )
+
+
+# Education: Recode to the Needed Segments
+data20$Education = car::recode(
+  data20$Education,
+  "1='Less than HS diploma' ;2='HS grad no college';
+                    3='Some college or associates degree';
+                    4='Some college or associates degree';5='College graduate'; 6='Advanced degree';
+                    7='Advanced degree';
+                    8='Advanced degree';;9='NR'"
+)
+
+
+data20$Education <-
+  factor(
+    data20$Education,
+    levels = c(
+      "Less than HS diploma",
+      "HS grad no college",
+      "Some college or associates degree",
+      "College graduate",
+      "Advanced degree",
+      "NR"
+    )
+  )
+
+table(data20$Education)
+
+# Age: Recode from Continous to Ordinal
+data20$Age <- case_when(
+  data20$Age <= 24 ~ '18-24',
+  between(data20$Age, 25, 34) ~ '25-34',
+  between(data20$Age, 35, 44) ~ '35-44',
+  between(data20$Age, 45, 54) ~ '45-54',
+  between(data20$Age, 55, 64) ~ '55-64',
+  between(data20$Age, 65, 98) ~ '65 and older',
+  data20$Age >= 99 ~ 'NR'
+)
+
+data20$Age <- as.factor(data20$Age)
+
+
+# Race: Recode from Levels to Categorical
+
+data20$Race <- case_when(
+  data20$Race == 07 ~ 'White',
+  data20$Race == 02 ~ 'Other',
+  data20$Race == 03 ~ 'Black',
+  data20$Race == 05 ~ 'Hispanic',
+  data20$Race == 04 ~ 'Other',
+  data20$Race == 06 ~ 'Other',
+  data20$Race >= 08 ~ 'Other'
+)
+
+data20$Race <-
+  factor(data20$Race, levels = c("White", "Black", "Hispanic", "Other"))
+
+
+
+#Household Size:
+data20$HouseholdSize[data20$HouseholdSize >= 40] <- 'NR'
+```
+
+```{r recode response variables, include=FALSE, echo=FALSE, warning=FALSE}
+
+#are you familiar with gava
+data20$Q12_3 = car::recode(data20$Q12_3,
+                           "1 = 'Not familiar'; 2 = 'Somewhat familiar'; 3 ='Very familiar';98='NR'")
+data20$Q12_3 <-
+  factor(data20$Q12_3,
+         levels = c("Not familiar", "Somewhat familiar", "Very familiar", "NR"))
+
+# How do you know about GAVA?
+data20$Q12_4_A1 = car::recode(
+  data20$Q12_4_A1,
+  "1 = 'From a neighbor'; 2 = 'Received an email or phone call'; 3 ='An organizer from GAVA'; 4='Invited to a GAVA event';5='Attended a meeting where GAVA was present';88 ='Other'; 98='NA'"
+)
+
+#hours of afterschool childcare needed
+data20$Q3_4 = car::recode(
+  data20$Q3_4,
+  "1 = 'Under 5 hours a week'; 2 = 'Between 5 and 10 hours a week';3 = 'Between 10 and 15 hours a week';4 = 'Over 15 hours a week'; 98='NA'"
+)
+data20$Q3_4 <- factor(
+  data20$Q3_4,
+  levels = c(
+    "Under 5 hours a week",
+    "Between 5 and 10 hours a week",
+    "Between 10 and 15 hours a week",
+    "Over 15 hours a week"
+  )
+)
+#Walking at Night
+data20$Q2_1 = car::recode(data20$Q2_1, "1='Yes'; 2 = 'No'; 98 = 'Dont Know / No Response'")
+data20$Q2_1 <-
+  factor(data20$Q2_1, levels = c("Yes", "No", "Dont Know / No Response"))
+
+#walking during day
+data20$Q2_2 = car::recode(data20$Q2_2, "1='Yes'; 2 = 'No'; 98 = 'Dont Know / No Response'")
+data20$Q2_2 <-
+  factor(data20$Q2_2, levels = c("Yes", "No", "Dont Know / No Response"))
+
+#Reasons you feel unsafe
+data20$Q2_3_A1 = car::recode(
+  data20$Q2_3_A1,
+  "1 = 'Lack of sidewalks'; 2 = 'Cars/trucks driving too fast'; 3 ='Too many cars'; 88='Other'; 98='NA'"
+)
+
+#safe parks
+data20$Q2_4A = car::recode(
+  data20$Q2_4A,
+  "1 = 'Strongly Disagree'; 2 = 'Somewhat Disagree';3 = 'Somewhat Agree';4 = 'Strongly Agree'; 98='NR'"
+)
+data20$Q2_4A <-
+  factor(
+    data20$Q2_4A,
+    levels = c(
+      "Strongly Disagree",
+      "Somewhat Disagree",
+      "Somewhat Agree",
+      "Strongly Agree",
+      "NR"
+    )
+  )
+
+#access to education
+data20$Q5_2 = car::recode(
+  data20$Q5_2,
+  "1 = 'Very Available'; 2 = 'Usually Available';3 = 'Not Available';4 = 'Not Available right now due to COVID-19';'Depends'; 98='NR'"
+)
+data20$Q5_2 <-
+  factor(
+    data20$Q5_2,
+    levels = c(
+      "Very Available",
+      "Usually Available",
+      "Not Available",
+      "Not Available right now due to COVID-19",
+      "Depends",
+      "NR"
+    )
+  )
+
+#how would you rate your health
+data20$Q8_2 = car::recode(data20$Q8_2,
+                          "1 = 'Excellent'; 2 = 'Very Good'; 3 ='Good'; 'Fair'; 'Poor'; 98='NR'")
+data20$Q8_2 <-
+  factor(data20$Q8_2,
+         levels = c("Excellent", "Very Good", "Good", "Fair", "Poor", "NR"))
+
+#Health insurance/coverage
+data20$Q8_5 = car::recode(data20$Q8_5, "1 = 'Yes'; 2 = 'No'; 98='NR'")
+data20$Q8_5 <- factor(data20$Q8_5, levels = c("Yes", "No", "NR"))
+
+#Reasons went without health insurance
+data20$Q8_6 = car::recode(
+  data20$Q8_6,
+  "1 = 'Lost job or changed employers'; 2 = 'Spouse/parent lost job';3 = 'Divorced or separated';4 = 'Spouse/parent died'; 5 = 'Became ineligible for age or school'; 6 = 'No employer plan'; 7 = 'Part-time work' ; 8= 'Employer benefits ran out' ; 9 = 'Couldnt afford premimums' ; 10 = 'Refused coverage'; 11 = 'Lost Medicaed/Medicare' ; 12 = 'Self-employed & high cost'; 13='No need because healthy'; 88 = 'Other' ; 98='NR'"
+)
+
+data20$Q8_6 <-
+  factor(
+    data20$Q8_6,
+    levels = c(
+      "Lost job or changed employers",
+      "Spouse/parent lost job",
+      "Divorced or separated",
+      "Spouse/parent died",
+      "Became ineligible for age or school",
+      "No employer plan",
+      "Part-time work" ,
+      "Employer benefits ran out" ,
+      "Couldnt afford premimums" ,
+      "Refused coverage",
+      "Lost Medicaed/Medicare" ,
+      "Self-employed & high cost",
+      "No need because healthy",
+      "Other",
+      "NR"
+    )
+  )
+
+
+#Reasons went without health insurance- Could not afford to pay the premiums
+data20$Q8_6_couldnotaffordpremium <-
+  ifelse(data20$Q8_6 == "Couldnt afford premimums", 1, 0)
+#recode afford premiums
+data20$Q8_6_couldnotaffordpremium = car::recode(data20$Q8_6_couldnotaffordpremium, "1 = 'Yes'; 2 = 'No'")
+data20$Q8_6_couldnotaffordpremium <-
+  factor(data20$Q8_6_couldnotaffordpremium, levels = c("Yes", "No"))
+
+#Reasons went without health insurance- Lost Job or Changed Employers
+data20$Q8_6_lostjob <-
+  ifelse(data20$Q8_6 == "Lost job or changed employers", 1, NA)
+#recode lost job
+data20$Q8_6_lostjob = car::recode(data20$Q8_6_lostjob, "1 = 'Yes'")
+data20$Q8_6_lostjob <-
+  factor(data20$Q8_6_lostjob, levels = c("Yes"))
+
+#############Hazard related questions###############
+#There is a safe place near our home to go for help or shelter during a natural hazard or emergency
+data20$Q11_1A = car::recode(
+  data20$Q11_1A,
+  "1 = 'Strongly Disagree'; 2 = 'Somewhat Disagree';3 = 'Somewhat Agree';4 = 'Strongly Agree'; 98='NR'"
+)
+data20$Q11_1A <-
+  factor(
+    data20$Q11_1A,
+    levels = c(
+      "Strongly Disagree",
+      "Somewhat Disagree",
+      "Somewhat Agree",
+      "Strongly Agree",
+      "NR"
+    )
+  )
+
+#Has your household or neighborhood experienced FLOODING in the last ten (10) years?
+data20$Q11_3A = car::recode(data20$Q11_3A, "1='Yes'; 2 = 'No'; 98 = 'No Response'")
+data20$Q11_3A <-
+  factor(data20$Q11_3A, levels = c("Yes", "No", "No Response"))
+
+#Has your household or neighborhood experienced EXTREME HEAT in the last ten (10) years?
+data20$Q11_3B = car::recode(data20$Q11_3B, "1='Yes'; 2 = 'No'; 98 = 'No Response'")
+data20$Q11_3B <-
+  factor(data20$Q11_3B, levels = c("Yes", "No", "No Response"))
+
+#Has your household or neighborhood experienced POOR AIR QUALITY in the last ten (10) years?
+data20$Q11_3D = car::recode(data20$Q11_3D, "1 = 'Yes'; 2 = 'No'; 98 = 'NR'")
+data20$Q11_3D <- factor(data20$Q11_3D, levels = c("Yes", "No", "NR"))
+
+#Experienced symptoms related to extreme heat
+data20$Q11_8A = car::recode(data20$Q11_8A, "1 = 'Yes'; 2 = 'No'; 98 = 'NR'")
+data20$Q11_8A <- factor(data20$Q11_8A, levels = c("Yes", "No", "NR"))
+
+#Trees/tree cover now
+data20$Q10_1C = car::recode(
+  data20$Q10_1C,
+  "1 = 'A considerable shortage'; 2 = 'Probably not enough'; 3 = 'About the right amount'; 4 = 'Enough'; 5 = 'More than enough'; 98 = 'NR'"
+)
+data20$Q10_1C <-
+  factor(
+    data20$Q10_1C,
+    levels = c(
+      "A considerable shortage",
+      "Probably not enough",
+      "About the right amount",
+      "Enough",
+      "More than enough",
+      "NR"
+    )
+  )
+```
+
+```{r 78744 data, echo=FALSE, include=FALSE}
+data44<-data20[which(data20$`Zip Code` == "78744"), -1]
+```
+
+Austin Metro Demographics
+
+```{r demographic tables, echo=FALSE}
+table(data20$County)
+
+table(data20$Gender)
+
+table(data20$Residence)
+
+table(data20$Income)
+
+table(data20$Education)
+
+table(data20$Age)
+
+table(data20$Race)
+
+table(data20$HouseholdSize)
+```
+
+78744 Demographics
+
+```{r 78744 demographic tables, echo=FALSE}
+table(data44$County)
+
+table(data44$Gender)
+
+table(data44$Residence)
+
+table(data44$Income)
+
+table(data44$Education)
+
+table(data44$Age)
+
+table(data44$Race)
+
+table(data44$HouseholdSize)
+```
+
+Know about Go Austin Vamos Austin!
+
+```{r charts for GAVA, echo=FALSE, warning=FALSE}
+table(data44$Q12_3)
+
+ggplot(data = data44) +
+  geom_bar(aes(x = Q12_3, fill = Race)) +
+  scale_fill_discrete(name = "Race",
+                      labels = c("White", "Black", "Hispanic", "Other", "NA")) +
+  scale_x_discrete(name = "How Familiar are you with GAVA?")
+
+table(data44$Q12_4_A1)
+
+data44 %>%
+  drop_na(Q12_4_A1) %>%
+  ggplot(aes(x = Q12_4_A1)) +
+  geom_bar(mapping = aes(x = Q12_4_A1)) +
+  scale_x_discrete(guide = guide_axis(n.dodge = 3)) +
+  labs(title = "How do you know about GAVA?")
+
+table(data44$Q12_4_OTH)
+
+#GAVA programs and resources
+data44$Q12_5_A1 = car::recode(
+  data44$Q12_5_A1,
+  "1 = 'Helped me get a program or service in my neighborhood or school'; 2 = 'NA'; 3 ='Provided cash or food assistance'; 4='NA';5='Connected me to another organization or resource that I needed'; 6 = 'NA'; 7 = 'Supported my neighborhoods disaster preparedness'; 88 ='Other'; 98='NA'"
+)
+
+table(data44$Q12_5_A1)
+
+data44 %>%
+  drop_na(Q12_5_A1) %>%
+  ggplot(aes(x = Q12_5_A1)) +
+  geom_bar(mapping = aes(x = Q12_5_A1)) +
+  scale_x_discrete(guide = guide_axis(n.dodge = 3)) +
+  labs(title = "What programs, resources, information, or other support have you received from or through GAVA?")
+
+table(data44$Q12_5_OTH)
+
+```
+
+**Fixing the question "How Familiar are you with Gave" to show precentages**
+
+```{r how_familiar, message=FALSE, warning=FALSE}
+
+ggplot(data = data44) +
+  geom_bar(aes(x = Q12_3, fill = Race)) +
+  scale_fill_discrete(name = "Race",
+                      labels = c("White", "Black", "Hispanic", "Other", "NA")) +
+  scale_x_discrete(name = "How Familiar are you with GAVA?")
+
+
+how_familiar <-
+  data44 %>% group_by(Q12_3) %>% count(Race) %>% mutate(Percent = n / sum(n) *
+                                                            100)
+
+how_familiar
+
+ggplot(how_familiar, aes(x = Q12_3, y = Percent, fill = Race)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste(format(
+    round(Percent, 1), nsmall = 1
+  ), "%"), y = Percent),
+  position = position_stack(vjust = 0.5)) +
+  labs(x = "How Familiar are you with GAVA?", y = "Percentage", fill = "Race")
+
+```
+
+Public Safety in 78704 Data
+
+```{r charts for public safety, echo=FALSE, warning=FALSE}
+#Walking at Night
+ggplot(data = data44) +
+  geom_bar(mapping = aes(x = Q2_1, fill = Race)) +
+  scale_fill_discrete(name = "Race",
+                      labels = c("White", "Black", "Hispanic", "Other", "NA")) +
+  scale_x_discrete(name = "Afraid to walk at night",
+                   labels = c("Yes", "No", "No Response"))
+
+#walking during day
+ggplot(data = data44) +
+  geom_bar(mapping = aes(x = Q2_2, fill = Race)) +
+  scale_fill_discrete(name = "Race",
+                      labels = c("White", "Black", "Hispanic", "Other", "NA")) +
+  scale_x_discrete(name = "Afraid to walk during day",
+                   labels = c("Yes", "No", "No Response"))
+
+#reasons for feeling unsafe
+table(data44$Q2_3_A1)
+
+data44 %>%
+  drop_na(Q2_3_A1) %>%
+  ggplot(aes(x = Q2_3_A1)) +
+  geom_bar(mapping = aes(x = Q2_3_A1)) +
+  scale_x_discrete(guide = guide_axis(n.dodge = 3)) +
+  labs(title = "Reason for feeling unsafe?")
+
+
+#safe parks
+table(data44$Q2_4A)
+
+ggplot(data = data44) +
+  geom_bar(
+    mapping = aes(x = Q2_4A, y = ..prop.., group = 1),
+    fill = "darkred",
+    stat = "count"
+  ) +
+  scale_y_continuous(limits = c(0, 0.9),
+                     labels = scales::percent_format()) +
+  theme(panel.background = element_blank(),
+        plot.background = element_blank(),
+        axis.text = element_text(size = 13, face = "bold"),
+        axis.title = element_text(size = 12, face = "bold")
+        ) +
+  scale_x_discrete(guide = guide_axis(n.dodge = 3)) +
+  ylab("Percentage in 78744") +
+  labs(title = "There are safe parks or playgrounds in my neighborhood")
+
+```
+
+Social Determinants of Health Questions (with longitudinal data available)
+
+```{r SDOH plots, echo=FALSE, warning=FALSE}
+#Amt of Afterschool Childcare Needed ea. week
+par(mar = c(11, 8, 8, 8))#this changes the margins of the chart
+barplot(
+  prop.table(table(data20$Q3_4, data20$Race), 2) * 100,
+  main = 'Amt of Afterschool
+  Childcare Needed ea. week',
+  xlab = 'Race/Ethnicity',
+  ylab = 'Percentages by Race/Ethnicity',
+  beside = T,
+  ylim = c(0 , 50),
+  col = c("burlywood4", "burlywood2", "coral2", "coral4"),
+  legend = rownames(table(data20$Q3_4, data20$Race)),
+  args.legend = list(
+    x = "topright",
+    cex = .6,
+    pt.cex = .2,
+    inset = c(-0.30, 2)
+  )
+)
+round(prop.table(table(data20$Q3_4, data20$Race), 2) * 100, digits = 0)
+
+#Access to Education/Development
+par(mar = c(11, 7, 7, 7))#this changes the margins of the chart
+barplot(
+  prop.table(table(data20$Q5_2, data20$Race), 2) * 100,
+  main = 'Access to Education/Development',
+  xlab = 'Race/Ethnicity',
+  ylab = '% by Race/Ethnicity',
+  beside = T,
+  ylim = c(0 , 50),
+  col = c(
+    "burlywood4",
+    "burlywood2",
+    "yellow",
+    "coral2",
+    "coral4",
+    "green"
+  ),
+  legend = rownames(table(data20$Q5_2, data20$Race)),
+  args.legend = list(
+    x = "topright",
+    cex = 0.6,
+    pt.cex = .2,
+    inset = c(-0.20, 1.4)
+  )
+)
+round(prop.table(table(data20$Q5_2, data20$Race), 2) * 100, digits = 0)
+
+
+#How would you rate your health?
+par(mar = c(11, 7, 7, 7))#this changes the margins of the chart
+barplot(
+  prop.table(table(data20$Q8_2, data20$Race), 2) * 100,
+  main = 'How would you rate your health?',
+  xlab = 'Race/Ethnicity',
+  ylab = 'Percentages by Race/Ethnicity',
+  beside = T,
+  ylim = c(0 , 50),
+  col = c(
+    "burlywood4",
+    "burlywood2",
+    "coral2",
+    "coral4",
+    "green",
+    "yellow"
+  ),
+  legend = rownames(table(data20$Q8_2, data20$Race)),
+  args.legend = list(
+    x = "topright",
+    cex = 0.8,
+    pt.cex = .2,
+    inset = c(-0.10, 1.5)
+  )
+)
+round(prop.table(table(data20$Q8_2, data20$Race), 2) * 100, digits = 0)
+
+
+
+#Over past 12 months have health insurance
+par(mar = c(11, 9, 9, 8))#this changes the margins of the chart
+barplot(
+  prop.table(table(data20$Q8_5, data20$Race), 1) * 100,
+  main = 'Over the past 12 months did you not have health insurance/coverage?',
+  xlab = 'Race/Ethnicity',
+  ylab = '% by Race/Ethnicity',
+  beside = T,
+  ylim = c(0 , 50),
+  col = c("burlywood4", "burlywood2", "coral2"),
+  legend = rownames(table(data20$Q8_5, data20$Race)),
+  args.legend = list(
+    x = "topright",
+    cex = 1,
+    pt.cex = 1,
+    inset = c(-0.10, 2)
+  )
+)
+round(prop.table(table(data20$Q8_5, data20$Race), 2) * 100, digits = 0)
+
+#why not have insurance?
+
+par(mar = c(10, 10, 10, 10))#this changes the margins of the chart
+barplot(
+  prop.table(table(data20$Q8_6, data20$Race), 2) * 100,
+  las = 1,
+  horiz = TRUE,
+  main = 'Why did you not have health insurance?',
+  xlab = '% by Race/Ethnicity',
+  axis.title.x = .5,
+  axis.title.y = .5,
+  beside = T,
+  ylim = c(0 , 15),
+  col = c(
+    "burlywood2",
+    "turquoise",
+    "coral2",
+    "coral4",
+    "red",
+    "green",
+    "yellow",
+    "blue",
+    "violet"
+  ),
+  legend = rownames(table(data20$Q8_6, data20$Race)),
+  args.legend = list(
+    x = "topright",
+    cex = .6,
+    pt.cex = .2,
+    inset = c(-0.20, 1.5)
+  )
+)
+round(prop.table(table(data20$Q8_6, data20$Race), 2) * 100, digits = 0)
+
+
+#Need to drop NAs
+ggplot(data = data20) +
+  geom_bar(mapping = aes(x = Q8_6_lostjob, fill = Race)) +
+  scale_fill_discrete(name = "Race",
+                      labels = c("White", "Black", "Hispanic", "Other", "NA")) +
+  scale_x_discrete(name = "Lost job",
+                   labels = c("Yes"))
+
+ggplot(data = data20) +
+  geom_bar(mapping = aes(x = Q8_6_couldnotaffordpremium, fill = Race)) +
+  scale_fill_discrete(name = "Race",
+                      labels = c("White", "Black", "Hispanic", "Other", "NA")) +
+  scale_x_discrete(name = "Couldn't afford premium",
+                   labels = c("Yes"))
+```
+
+Climate and Hazards
+
+```{r charts for hazards, echo=FALSE, warning=FALSE}
+#safe place to go in emergency
+ggplot(data = data20) +
+  geom_bar(
+    mapping = aes(x = Q11_1A, y = ..prop.., group = 1),
+    fill = "darkred",
+    stat = "count"
+  ) +
+  scale_y_continuous(limits = c(0, 0.9),
+                     labels = scales::percent_format()) +
+  theme(panel.background = element_blank(),
+        plot.background = element_blank(),
+        axis.text = element_text(size = 13, face = "bold"),
+        axis.title = element_text(size = 12, face = "bold")
+  ) +
+  scale_x_discrete(guide = guide_axis(n.dodge = 3)) +
+  ylab("Percentage in Austin Metro") +
+  labs(title = "Safe Place to Go in Emergency")
+
+#Household experience with flooding by Race
+ggplot(data = data20) +
+  geom_bar(mapping = aes(x = Q11_3A, fill = Race)) +
+  scale_fill_discrete(name = "Race",
+                      labels = c("White", "Black", "Hispanic", "Other", "NA")) +
+  scale_x_discrete(name = "Household experienced flooding in last 10 years",
+                   labels = c("Yes", "No", "No Response"))
+
+#Flooding and Income
+ggplot(data = data20) +
+  geom_bar(mapping = aes(x = Q11_3A, fill = Income)) +
+  scale_fill_discrete(
+    name = "income",
+    labels = c(
+      "Less than $25,000",
+      "$25,000-$40,000",
+      "$40,000-$50,000",
+      "$50,000-$75,000",
+      "$75,000-$100,000",
+      "$100,000-$125,000",
+      "$125,000-$150,000",
+      "$150,000-$200,000",
+      "Over $200,000",
+      "NA"
+    )
+  ) +
+  scale_x_discrete(name = "HH experienced flooding in last 10 yrs by income",
+                   labels = c("Yes", "No", "No Response"))
+
+#Household experience with Poor Air Quality by Race
+ggplot(data = data20) +
+  geom_bar(mapping = aes(x = Q11_3D, fill = Race)) +
+  scale_fill_discrete(name = "Race",
+                      labels = c("White", "Black", "Hispanic", "Other", "NA")) +
+  scale_x_discrete(name = "Household experienced poor air quality in last 10 years",
+                   labels = c("Yes", "No", "No Response"))
+
+#Air Quality and Income
+ggplot(data = data20) +
+  geom_bar(mapping = aes(x = Q11_3D, fill = Income)) +
+  scale_fill_discrete(
+    name = "income",
+    labels = c(
+      "Less than $25,000",
+      "$25,000-$40,000",
+      "$40,000-$50,000",
+      "$50,000-$75,000",
+      "$75,000-$100,000",
+      "$100,000-$125,000",
+      "$125,000-$150,000",
+      "$150,000-$200,000",
+      "Over $200,000",
+      "NA"
+    )
+  ) +
+  scale_x_discrete(name = "HH experienced poor air quality in last 10 yrs by income",
+                   labels = c("Yes", "No", "No Response"))
+
+#Household experience with HEAT by Race
+ggplot(data = data20) +
+  geom_bar(mapping = aes(x = Q11_3B, fill = Race)) +
+  scale_fill_discrete(name = "Race",
+                      labels = c("White", "Black", "Hispanic", "Other", "NA")) +
+  scale_x_discrete(name = "Household experienced extreme heat in last 10 years",
+                   labels = c("Yes", "No", "No Response"))
+
+#Experienced Heat Symptoms by Race
+ggplot(data = data20) +
+  geom_bar(mapping = aes(x = Q11_8A, fill = Race)) +
+  scale_fill_discrete(name = "Race",
+                      labels = c("White", "Black", "Hispanic", "Other", "NA")) +
+  scale_x_discrete(name = "Experienced Heat Symptoms",
+                   labels = c("Yes", "No", "No Response"))
+
+
+#Heat Symptoms and Income
+ggplot(data = data20) +
+  geom_bar(mapping = aes(x = Q11_8A, fill = Income)) +
+  scale_fill_discrete(
+    name = "income",
+    labels = c(
+      "Less than $25,000",
+      "$25,000-$40,000",
+      "$40,000-$50,000",
+      "$50,000-$75,000",
+      "$75,000-$100,000",
+      "$100,000-$125,000",
+      "$125,000-$150,000",
+      "$150,000-$200,000",
+      "Over $200,000",
+      "NA"
+    )
+  ) +
+  scale_x_discrete(name = "Experienced Heat Symptoms",
+                   labels = c("Yes", "No", "No Response"))
+
+#Trees/tree cover in my community now
+par(mar = c(6.1, 4.1, 4.1, 4.1))  #this changes the margins of the chart
+p <- ggplot(data = data20) +
+  geom_bar(mapping = aes(
+    x = Q10_1C,
+    fill = Race,
+    axis.title.x = .3,
+    srt = 35,
+    adj = 0.965
+  )) +
+  scale_fill_discrete(name = "Race",
+                      labels = c("White", "Black", "Hispanic", "Other", "NA")) +
+  scale_x_discrete(
+    name = "Trees/tree cover in my community now",
+    labels = c(
+      "A considerable shortage",
+      "Probably not enough",
+      "About the right amount",
+      "Enough",
+      "More than enough",
+      "No Response"
+    )
+  )
+p + theme(axis.text.x = element_text(
+  face = "italic",
+  color = "#000000",
+  size = 10,
+  angle = 45,
+  hjust = 1
+))
+
+```
