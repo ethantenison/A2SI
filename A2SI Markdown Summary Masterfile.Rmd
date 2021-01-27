@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r data20, include=FALSE}
 source("utils1.R")
+library(RColorBrewer)
+library(viridis)
 ```
 
 ```{r clean data20, include=FALSE, echo=FALSE}
@@ -365,7 +367,7 @@ data20$Q10_1C <-
 data44<-data20[which(data20$`Zip Code` == "78744"), -1]
 ```
 
-Austin Metro Demographics
+**Austin Metro Demographics**
 
 ```{r demographic tables, echo=FALSE}
 table(data20$County)
@@ -385,7 +387,7 @@ table(data20$Race)
 table(data20$HouseholdSize)
 ```
 
-78744 Demographics
+**78744 Demographics**
 
 ```{r 78744 demographic tables, echo=FALSE}
 table(data44$County)
@@ -405,7 +407,7 @@ table(data44$Race)
 table(data44$HouseholdSize)
 ```
 
-Know about Go Austin Vamos Austin!
+**Know about Go Austin Vamos Austin!**
 
 ```{r charts for GAVA, echo=FALSE, warning=FALSE}
 table(data44$Q12_3)
@@ -446,34 +448,55 @@ table(data44$Q12_5_OTH)
 
 ```
 
-**Fixing the question "How Familiar are you with Gave" to show precentages**
+**Fixing the question "How Familiar are you with Gave" to show percentages**
 
 ```{r how_familiar, message=FALSE, warning=FALSE}
-
-ggplot(data = data44) +
-  geom_bar(aes(x = Q12_3, fill = Race)) +
-  scale_fill_discrete(name = "Race",
-                      labels = c("White", "Black", "Hispanic", "Other", "NA")) +
-  scale_x_discrete(name = "How Familiar are you with GAVA?")
-
 
 how_familiar <-
   data44 %>% group_by(Q12_3) %>% count(Race) %>% mutate(Percent = n / sum(n) *
                                                             100)
 
 how_familiar
+windowsFonts(Helvetica=windowsFont("Helvetica"))
 
-ggplot(how_familiar, aes(x = Q12_3, y = Percent, fill = Race)) +
+colors <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
+          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+library(RColorBrewer)
+theme_set(theme_classic())
+
+g <- ggplot(how_familiar, aes(x = Q12_3, y = Percent, fill = Race)) +
   geom_bar(stat = "identity") +
   geom_text(aes(label = paste(format(
     round(Percent, 1), nsmall = 1
   ), "%"), y = Percent),
   position = position_stack(vjust = 0.5)) +
-  labs(x = "How Familiar are you with GAVA?", y = "Percentage", fill = "Race")
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black"),
+    text = element_text(family = "Helvetica",
+                        size = 20),
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(vjust = 3.5),
+    plot.title = element_text(hjust = 0.5),
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "How Familiar are you with GAVA?", y = "Percentage", fill = "Race") +
+  scale_fill_manual(values = colors, na.value = "grey") +
+  #scale_fill_brewer(palette="Set3", na.value="grey")+
+  #scale_fill_viridis_d(option = "plasma", direction = 1) +
+  scale_y_continuous(labels = scales::percent_format(scale = 1))
+
+g
+
+ggsave("images/how_familiar.png", height = 7, width = 10)
 
 ```
 
-Public Safety in 78704 Data
+**Public Safety in 78704 Data**
 
 ```{r charts for public safety, echo=FALSE, warning=FALSE}
 #Walking at Night
@@ -525,7 +548,80 @@ ggplot(data = data44) +
 
 ```
 
-Social Determinants of Health Questions (with longitudinal data available)
+**Redoing graphs of those that are afraid to walk at night and during the day with percentages**
+
+```{r do_you_feel_afraid, message=FALSE, warning=FALSE}
+
+#Walking at Night
+how_afraid <-
+  data44 %>% group_by(Q2_1) %>% count(Race) %>% mutate(Percent = n / sum(n) *
+                                                            100)
+theme_set(theme_classic())
+
+g <- ggplot(how_afraid, aes(x = Q2_1, y = Percent, fill = Race)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste(format(
+    round(Percent, 1), nsmall = 1
+  ), "%"), y = Percent),
+  position = position_stack(vjust = 0.5)) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black"),
+    text = element_text(family = "Helvetica",
+                        size = 20),
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(vjust = 3),
+    plot.title = element_text(hjust = 0.5),
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "Afraid to walk at night?", y = "Percentage", fill = "Race") +
+  scale_fill_manual(values = colors, na.value = "grey") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1))
+
+g
+
+ggsave("images/how_afraid_night.png", height = 7, width = 10)
+
+
+#walking during day
+how_afraid <-
+  data44 %>% group_by(Q2_2) %>% count(Race) %>% mutate(Percent = n / sum(n) *
+                                                            100)
+theme_set(theme_classic())
+
+g <- ggplot(how_afraid, aes(x = Q2_2, y = Percent, fill = Race)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste(format(
+    round(Percent, 1), nsmall = 1
+  ), "%"), y = Percent),
+  position = position_stack(vjust = 0.5)) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black"),
+    text = element_text(family = "Helvetica",
+                        size = 20),
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(vjust = 3),
+    plot.title = element_text(hjust = 0.5),
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "Afraid to walk during the day?", y = "Percentage", fill = "Race") +
+  scale_fill_manual(values = colors, na.value = "grey") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1))
+
+g
+
+ggsave("images/how_afraid_day.png", height = 7, width = 10)
+
+```
+
+**Social Determinants of Health Questions (with longitudinal data available)**
 
 ```{r SDOH plots, echo=FALSE, warning=FALSE}
 #Amt of Afterschool Childcare Needed ea. week
