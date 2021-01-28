@@ -11,11 +11,15 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r data20, include=FALSE}
 source("utils1.R")
-library(RColorBrewer)
-library(viridis)
+windowsFonts(Helvetica=windowsFont("Helvetica"))
+
+colors <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
+          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
 ```
 
 ```{r clean data20, include=FALSE, echo=FALSE}
+
 
 ##Drop some columns we don't need
 drops <- c("CASE.ID",
@@ -26,7 +30,7 @@ drops <- c("CASE.ID",
            "FNAME",
            "LNAME",
            "RESP_NAME")
-data20 <- data20[,!(names(data20) %in% drops)]
+data20 <- data20[, !(names(data20) %in% drops)]
 
 setnames(
   data20,
@@ -338,11 +342,13 @@ data20$Q11_3B <-
 
 #Has your household or neighborhood experienced POOR AIR QUALITY in the last ten (10) years?
 data20$Q11_3D = car::recode(data20$Q11_3D, "1 = 'Yes'; 2 = 'No'; 98 = 'NR'")
-data20$Q11_3D <- factor(data20$Q11_3D, levels = c("Yes", "No", "NR"))
+data20$Q11_3D <-
+  factor(data20$Q11_3D, levels = c("Yes", "No", "NR"))
 
 #Experienced symptoms related to extreme heat
 data20$Q11_8A = car::recode(data20$Q11_8A, "1 = 'Yes'; 2 = 'No'; 98 = 'NR'")
-data20$Q11_8A <- factor(data20$Q11_8A, levels = c("Yes", "No", "NR"))
+data20$Q11_8A <-
+  factor(data20$Q11_8A, levels = c("Yes", "No", "NR"))
 
 #Trees/tree cover now
 data20$Q10_1C = car::recode(
@@ -456,13 +462,8 @@ how_familiar <-
   data44 %>% group_by(Q12_3) %>% count(Race) %>% mutate(Percent = n / sum(n) *
                                                             100)
 
-how_familiar
-windowsFonts(Helvetica=windowsFont("Helvetica"))
+totals <- how_familiar %>% group_by(Q12_3) %>% summarize(total = sum(n))
 
-colors <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
-          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-
-library(RColorBrewer)
 theme_set(theme_classic())
 
 g <- ggplot(how_familiar, aes(x = Q12_3, y = Percent, fill = Race)) +
@@ -471,6 +472,12 @@ g <- ggplot(how_familiar, aes(x = Q12_3, y = Percent, fill = Race)) +
     round(Percent, 1), nsmall = 1
   ), "%"), y = Percent),
   position = position_stack(vjust = 0.5)) +
+    geom_text(aes(
+    x = Q12_3,
+    y = 102,
+    label = paste("Total: ", total),
+    fill = NULL
+  ), data = totals) +
   theme(
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
@@ -486,13 +493,12 @@ g <- ggplot(how_familiar, aes(x = Q12_3, y = Percent, fill = Race)) +
   ) +
   labs(title = "How Familiar are you with GAVA?", y = "Percentage", fill = "Race") +
   scale_fill_manual(values = colors, na.value = "grey") +
-  #scale_fill_brewer(palette="Set3", na.value="grey")+
-  #scale_fill_viridis_d(option = "plasma", direction = 1) +
   scale_y_continuous(labels = scales::percent_format(scale = 1))
 
 g
 
 ggsave("images/how_familiar.png", height = 7, width = 10)
+
 
 ```
 
@@ -502,10 +508,11 @@ ggsave("images/how_familiar.png", height = 7, width = 10)
 #Walking at Night
 ggplot(data = data44) +
   geom_bar(mapping = aes(x = Q2_1, fill = Race)) +
-  scale_fill_discrete(name = "Race",
-                      labels = c("White", "Black", "Hispanic", "Other", "NA")) +
+  scale_fill_manual(values = colors, na.value = "grey") +
   scale_x_discrete(name = "Afraid to walk at night",
-                   labels = c("Yes", "No", "No Response"))
+                   labels = c("Yes", "No", "No Response")) 
+
+ggsave("images/how_afraid_night_withoutpercentages.png", height = 7, width = 10)
 
 #walking during day
 ggplot(data = data44) +
@@ -556,6 +563,10 @@ ggplot(data = data44) +
 how_afraid <-
   data44 %>% group_by(Q2_1) %>% count(Race) %>% mutate(Percent = n / sum(n) *
                                                             100)
+
+totals <- how_afraid %>% group_by(Q2_1) %>% summarize(total = sum(n))
+
+
 theme_set(theme_classic())
 
 g <- ggplot(how_afraid, aes(x = Q2_1, y = Percent, fill = Race)) +
@@ -564,6 +575,12 @@ g <- ggplot(how_afraid, aes(x = Q2_1, y = Percent, fill = Race)) +
     round(Percent, 1), nsmall = 1
   ), "%"), y = Percent),
   position = position_stack(vjust = 0.5)) +
+  geom_text(aes(
+    x = Q2_1,
+    y = 102,
+    label = paste("Total: ", total),
+    fill = NULL
+  ), data = totals) +
   theme(
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
@@ -590,6 +607,8 @@ ggsave("images/how_afraid_night.png", height = 7, width = 10)
 how_afraid <-
   data44 %>% group_by(Q2_2) %>% count(Race) %>% mutate(Percent = n / sum(n) *
                                                             100)
+totals <- how_afraid %>% group_by(Q2_2) %>% summarize(total = sum(n))
+
 theme_set(theme_classic())
 
 g <- ggplot(how_afraid, aes(x = Q2_2, y = Percent, fill = Race)) +
@@ -598,6 +617,12 @@ g <- ggplot(how_afraid, aes(x = Q2_2, y = Percent, fill = Race)) +
     round(Percent, 1), nsmall = 1
   ), "%"), y = Percent),
   position = position_stack(vjust = 0.5)) +
+  geom_text(aes(
+    x = Q2_2,
+    y = 102,
+    label = paste("Total: ", total),
+    fill = NULL
+  ), data = totals) +
   theme(
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
@@ -618,6 +643,104 @@ g <- ggplot(how_afraid, aes(x = Q2_2, y = Percent, fill = Race)) +
 g
 
 ggsave("images/how_afraid_day.png", height = 7, width = 10)
+
+#reasons for feeling unsafe
+reasons_unsafe <-
+  data44 %>% count(Q2_3_A1) %>% na.omit() %>% mutate(Percent = n / sum(n) *
+                                                            100, one_bar = "bar") 
+
+totals <- reasons_unsafe %>% group_by(Q2_3_A1) %>% summarize(total = sum(n))
+
+g <- ggplot(reasons_unsafe, aes(x = one_bar, y = Percent, fill = Q2_3_A1)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste(format(
+    round(Percent, 1), nsmall = 1
+  ), "%" ,"\n", n, "    "), y = Percent),
+  position = position_stack(vjust = 0.5)) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    text = element_text(family = "Helvetica",
+                        size = 20),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.line=element_blank(),
+    axis.text.x=element_blank(),
+    axis.text.y=element_blank(),
+    axis.ticks = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "Reasons for feeling unsafe", y = "Percentage", fill = "Reasons") +
+  scale_fill_manual(values = colors, na.value = "grey") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+  coord_flip()
+
+g
+
+ggsave("images/reasons_for_feeling_unsafe.png", height = 2, width = 10)
+
+#safe parks
+table(data44$Q2_4A)
+
+ggplot(data = data44) +
+  geom_bar(
+    mapping = aes(x = Q2_4A, y = ..prop.., group = 1),
+    fill = "darkred",
+    stat = "count"
+  ) +
+  scale_y_continuous(limits = c(0, 0.9),
+                     labels = scales::percent_format()) +
+  theme(panel.background = element_blank(),
+        plot.background = element_blank(),
+        axis.text = element_text(size = 13, face = "bold"),
+        axis.title = element_text(size = 12, face = "bold")
+        ) +
+  scale_x_discrete(guide = guide_axis(n.dodge = 3)) +
+  ylab("Percentage in 78744") +
+  labs(title = "There are safe parks or playgrounds in my neighborhood")
+
+
+safe_parks <-
+  data44 %>% count(Q2_4A) %>% na.omit() %>% mutate(Percent = n / sum(n) *
+                                                            100, one_bar = "bar") 
+
+totals <- safe_parks %>% group_by(Q2_4A) %>% summarize(total = sum(n))
+
+g <- ggplot(safe_parks, aes(x = one_bar, y = Percent, fill = Q2_4A)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste(format(
+    round(Percent, 1), nsmall = 1
+  ), "%" ,"\n", n, "    "), y = Percent),
+  position = position_stack(vjust = 0.5)) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    text = element_text(family = "Helvetica",
+                        size = 16),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.line=element_blank(),
+    axis.text.x=element_blank(),
+    axis.text.y=element_blank(),
+    axis.ticks = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    legend.title = element_blank(),
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "There are safe parks or playgrounds in my neighborhood", y = "Percentage", fill = "Reasons") +
+  scale_fill_manual(values = colors, na.value = "grey") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+  coord_flip() +
+  scale_linetype_manual(guide = guide_legend(reverse = TRUE))
+
+g
+
+ggsave("images/safe_park.png", height = 2, width = 10)
 
 ```
 
@@ -773,7 +896,57 @@ ggplot(data = data20) +
                    labels = c("Yes"))
 ```
 
-Climate and Hazards
+**Fixing social determinants of health**
+
+```{r social_determinants, message=FALSE, warning=FALSE}
+
+#Amt of Afterschool Childcare Needed ea. week
+after_school <-
+  data20 %>% group_by(Q3_4) %>% count(Race) %>% na.omit() %>%
+  mutate(Percent = n / sum(n) * 100)
+
+g <- ggplot(after_school, aes(x = Race, y = Percent, fill = Race)) +
+  geom_bar(stat = 'identity') +
+  facet_grid(cols = vars(Q3_4)) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    strip.background = element_blank(),
+    panel.spacing = unit(4, "lines"),
+    text = element_text(family = "Helvetica",
+                        size = 16),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    plot.title = element_text(hjust = 0.5, vjust = 2),
+    
+    legend.title = element_blank(),
+    legend.position = "none",
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "Amt of Afterschool
+  Childcare Needed ea. week",
+  y = "Percentage",
+  fill = "Race") +
+  scale_fill_manual(values = colors, na.value = "grey") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+  scale_linetype_manual(guide = guide_legend(reverse = TRUE))
+
+g
+
+ggsave("images/after_school.png",
+       height = 5,
+       width = 20)
+
+
+
+
+
+```
+
+**Climate and Hazards**
 
 ```{r charts for hazards, echo=FALSE, warning=FALSE}
 #safe place to go in emergency
