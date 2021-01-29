@@ -10,11 +10,12 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r data20, include=FALSE}
+library(RColorBrewer)
 source("utils1.R")
 windowsFonts(Helvetica=windowsFont("Helvetica"))
 
 colors <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
-          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+          "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#b19cd9")
 
 ```
 
@@ -218,7 +219,7 @@ data20$Q2_2 <-
 #Reasons you feel unsafe
 data20$Q2_3_A1 = car::recode(
   data20$Q2_3_A1,
-  "1 = 'Lack of sidewalks'; 2 = 'Cars/trucks driving too fast'; 4 ='Too many cars';3 = 'Cars/trucks driving too fast'; 88='Other'; 98='NA'"
+  "1 = 'Lack of sidewalks'; 2 = 'Cars/trucks driving too fast'; 4 ='Too many cars';3 = 'Cars/trucks driving \n too fast'; 88='Other'; 98='NA'"
 )
 
 #safe parks
@@ -486,12 +487,12 @@ g <- ggplot(how_familiar, aes(x = Q12_3, y = Percent, fill = Race)) +
     text = element_text(family = "Helvetica",
                         size = 20),
     axis.title.x = element_blank(),
-    axis.title.y = element_text(vjust = 3.5),
+    axis.title.y = element_blank(),
     plot.title = element_text(hjust = 0.5),
     plot.margin = margin(10, 10, 10, 10)
     
   ) +
-  labs(title = "How Familiar are you with GAVA?", y = "Percentage", fill = "Race") +
+  labs(title = "How Familiar are you with GAVA?", y = "Percentage", fill = "Race/Ethnicity") +
   scale_fill_manual(values = colors, na.value = "grey") +
   scale_y_continuous(labels = scales::percent_format(scale = 1))
 
@@ -522,7 +523,7 @@ g <- ggplot(how_do_you_know, aes(x = Q12_4_A1, y = n, fill = Q12_4_A1)) +
     plot.margin = margin(10, 10, 10, 10)
     
   ) +
-  labs(title = "How did you hear about GAVA?", y = "Count", fill = "Race") +
+  labs(title = "How did you hear about GAVA?", y = "Count", fill = "Race/Ethnicity") +
   scale_fill_manual(values = colors, na.value = "grey")
   
 
@@ -558,7 +559,7 @@ g <- ggplot(resources_received, aes(x = Q12_5_A1, y = n, fill = Q12_5_A1)) +
     plot.margin = margin(10, 10, 10, 10)
     
   ) +
-  labs(title = "What programs, resources, information,\n or other support have you received from or through GAVA?", y = "Count", fill = "Race") +
+  labs(title = "What programs, resources, information,\n or other support have you received from or through GAVA?", y = "Count", fill = "Race/Ethnicity") +
   scale_fill_manual(values = colors, na.value = "grey")
   
 
@@ -655,12 +656,12 @@ g <- ggplot(how_afraid, aes(x = Q2_1, y = Percent, fill = Race)) +
     text = element_text(family = "Helvetica",
                         size = 20),
     axis.title.x = element_blank(),
-    axis.title.y = element_text(vjust = 3),
+    axis.title.y = element_blank(),
     plot.title = element_text(hjust = 0.5),
     plot.margin = margin(10, 10, 10, 10)
     
   ) +
-  labs(title = "Afraid to walk at night?", y = "Percentage", fill = "Race") +
+  labs(title = "Afraid to walk at night?", y = "Percentage", fill = "Race/Ethnicity") +
   scale_fill_manual(values = colors, na.value = "grey") +
   scale_y_continuous(labels = scales::percent_format(scale = 1))
 
@@ -697,12 +698,12 @@ g <- ggplot(how_afraid, aes(x = Q2_2, y = Percent, fill = Race)) +
     text = element_text(family = "Helvetica",
                         size = 20),
     axis.title.x = element_blank(),
-    axis.title.y = element_text(vjust = 3),
+    element_blank(),
     plot.title = element_text(hjust = 0.5),
     plot.margin = margin(10, 10, 10, 10)
     
   ) +
-  labs(title = "Afraid to walk during the day?", y = "Percentage", fill = "Race") +
+  labs(title = "Afraid to walk during the day?", y = "Percentage", fill = "Race/Ethnicity") +
   scale_fill_manual(values = colors, na.value = "grey") +
   scale_y_continuous(labels = scales::percent_format(scale = 1))
 
@@ -1379,4 +1380,426 @@ p + theme(axis.text.x = element_text(
   hjust = 1
 ))
 
+```
+
+**Fixing environmental hazards**
+
+```{r fixing_hazards, message=FALSE, warning=FALSE}
+
+#Safe place during an emergency 
+safe_place <-
+  data20 %>% count(Q11_1A) %>% na.omit() %>% mutate(Percent = n / sum(n) *
+                                                            100, one_bar = "bar") 
+
+totals <- safe_place %>% group_by(Q11_1A) %>% summarize(total = sum(n))
+
+g <- ggplot(safe_place, aes(x = one_bar, y = Percent, fill = Q11_1A)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(
+    label = paste(Q11_1A, "\n",
+                  format(round(Percent, 1), nsmall = 1),
+                  "%" , "\n", n, "   "),y = Percent
+  ), 
+  position = position_stack(vjust = 0.5),
+  size = 3) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    text = element_text(family = "Helvetica",
+                        size = 16),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.line=element_blank(),
+    axis.text.x=element_blank(),
+    axis.text.y=element_blank(),
+    axis.ticks = element_blank(),
+    plot.title = element_text(hjust = 0.5, size =16),
+    legend.title = element_blank(),
+    legend.position = "none",
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "Do you have a safe place to go in an emergency?", y = "Percentage in Austin Metro", fill = "Reasons") +
+  scale_fill_manual(values = colors, na.value = "grey") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+  coord_flip() +
+  guides(fill = guide_legend(reverse = TRUE))
+
+g
+
+ggsave("images/safe_emergency.png", height = 2, width = 10)
+
+
+#Household experience with flooding by Race
+df <-
+  data20 %>% group_by(Q11_3A) %>% count(Race) %>% mutate(Percent = n / sum(n) *
+                                                            100)
+
+totals <- df %>% group_by(Q11_3A) %>% summarize(total = sum(n))
+
+
+theme_set(theme_classic())
+
+g <- ggplot(df, aes(x = Q11_3A, y = Percent, fill = Race)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste(format(
+    round(Percent, 1), nsmall = 1
+  ), "%"), y = Percent),
+  position = position_stack(vjust = 0.5)) +
+  geom_text(aes(
+    x = Q11_3A,
+    y = 102,
+    label = paste("Total: ", total),
+    fill = NULL
+  ), data = totals) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black"),
+    text = element_text(family = "Helvetica",
+                        size = 20),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "Has your household experienced \n flooding in the past 10 years?", y = "Percentage", fill = "Race/Ethnicity") +
+  scale_fill_manual(values = colors, na.value = "grey") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1))
+
+g
+
+ggsave("images/experienced_flooding.png", height = 7, width = 10)
+
+
+#flooding by income
+df <-
+  data20 %>% group_by(Q11_3A) %>% count(Income) %>% mutate(Percent = n / sum(n) *
+                                                            100)
+totals <- df %>% group_by(Q11_3A) %>% summarize(total = sum(n))
+
+g <- ggplot(df, aes(x = Q11_3A, y = Percent, fill = Income)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste(format(
+    round(Percent, 1), nsmall = 1
+  ), "%"), y = Percent),
+  position = position_stack(vjust = 0.5)) +
+  geom_text(aes(
+    x = Q11_3A,
+    y = 102,
+    label = paste("Total: ", total),
+    fill = NULL
+  ), data = totals) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black"),
+    text = element_text(family = "Helvetica",
+                        size = 20),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "Flooding by Income", y = "Percentage", fill = "Income") +
+  scale_fill_brewer(palette = "RdYlGn", na.value = "grey") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1))
+
+g
+
+ggsave("images/experienced_flooding_income.png", height = 7, width = 10)
+
+#Household experienced air pollution
+df <-
+  data20 %>% group_by(Q11_3D) %>% count(Race) %>% mutate(Percent = n / sum(n) *
+                                                            100)
+
+totals <- df %>% group_by(Q11_3D) %>% summarize(total = sum(n))
+
+
+g <- ggplot(df, aes(x = Q11_3D, y = Percent, fill = Race)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste(format(
+    round(Percent, 1), nsmall = 1
+  ), "%"), y = Percent),
+  position = position_stack(vjust = 0.5)) +
+  geom_text(aes(
+    x = Q11_3D,
+    y = 102,
+    label = paste("Total: ", total),
+    fill = NULL
+  ), data = totals) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black"),
+    text = element_text(family = "Helvetica",
+                        size = 20),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "Has your household experienced poor \n air quality in the past 10 years?", y = "Percentage", fill = "Race/Ethnicity") +
+  scale_fill_manual(values = colors, na.value = "grey") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1))
+
+g
+
+ggsave("images/experienced_poor_air_quality.png", height = 7, width = 10)
+
+#poor airquality by income
+df <-
+  data20 %>% group_by(Q11_3D) %>% count(Income) %>% mutate(Percent = n / sum(n) *
+                                                            100)
+totals <- df %>% group_by(Q11_3D) %>% summarize(total = sum(n))
+
+g <- ggplot(df, aes(x = Q11_3D, y = Percent, fill = Income)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste(format(
+    round(Percent, 1), nsmall = 1
+  ), "%"), y = Percent),
+  position = position_stack(vjust = 0.5)) +
+  geom_text(aes(
+    x = Q11_3D,
+    y = 102,
+    label = paste("Total: ", total),
+    fill = NULL
+  ), data = totals) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black"),
+    text = element_text(family = "Helvetica",
+                        size = 20),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "Poor Air Quality by Income", y = "Percentage", fill = "Income") +
+  scale_fill_brewer(palette = "RdYlGn", na.value = "grey") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1))
+
+g
+
+ggsave("images/experienced_poor_air_quality_income.png", height = 7, width = 10)
+
+#Experienced Extreme Heat in past 10 years 
+df <-
+  data20 %>% group_by(Q11_3B) %>% count(Race) %>% mutate(Percent = n / sum(n) *
+                                                            100)
+
+totals <- df %>% group_by(Q11_3B) %>% summarize(total = sum(n))
+
+
+g <- ggplot(df, aes(x = Q11_3B, y = Percent, fill = Race)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste(format(
+    round(Percent, 1), nsmall = 1
+  ), "%"), y = Percent),
+  position = position_stack(vjust = 0.5)) +
+  geom_text(aes(
+    x = Q11_3B,
+    y = 102,
+    label = paste("Total: ", total),
+    fill = NULL
+  ), data = totals) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black"),
+    text = element_text(family = "Helvetica",
+                        size = 20),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    plot.title = element_blank(),
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "Has your household experienced \n extreme heat in the past 10 years?", y = "Percentage", fill = "Race/Ethnicity") +
+  scale_fill_manual(values = colors, na.value = "grey") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1))
+
+g
+
+ggsave("images/experienced_heat.png", height = 7, width = 10)
+
+#Experienced heat symptoms
+df <-
+  data20 %>% group_by(Q11_8A) %>%
+  count(Race) %>% mutate(Percent = n / sum(n) * 100) 
+
+df$Q11_8A <- as.character(df$Q11_8A)
+df$Q11_8A[is.na(df$Q11_8A)] <- "test"
+df <- df %>% filter(Q11_8A != "NR")
+df$Q11_8A[df$Q11_8A == "test"] <- "NR"
+df$Q11_8A <- factor(df$Q11_8A, levels = c("Yes", "No", "NR"))
+
+totals <- df %>% group_by(Q11_8A) %>% summarize(total = sum(n))
+
+
+g <- ggplot(df, aes(x = Q11_8A, y = Percent, fill = Race)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste(format(
+    round(Percent, 1), nsmall = 1
+  ), "%"), y = Percent),
+  position = position_stack(vjust = 0.5)) +
+  geom_text(aes(
+    x = Q11_8A,
+    y = 102,
+    label = paste("Total: ", total),
+    fill = NULL
+  ), data = totals) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black"),
+    text = element_text(family = "Helvetica",
+                        size = 20),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "Has your household experienced heat \n symptoms in the past 10 years?", y = "Percentage", fill = "Race/Ethnicity") +
+  scale_fill_manual(values = colors, na.value = "grey") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1))
+
+g
+
+ggsave("images/experienced_heat_symptoms.png", height = 7, width = 10)
+
+
+#Experienced Extreme Heat by income 
+df <-
+  data20 %>% group_by(Q11_8A) %>% count(Income) %>% mutate(Percent = n / sum(n) *
+                                                            100)
+df$Q11_8A <- as.character(df$Q11_8A)
+df$Q11_8A[is.na(df$Q11_8A)] <- "test"
+df <- df %>% filter(Q11_8A != "NR")
+df$Q11_8A[df$Q11_8A == "test"] <- "NR"
+df$Q11_8A <- factor(df$Q11_8A, levels = c("Yes", "No", "NR"))
+
+totals <- df %>% group_by(Q11_8A) %>% summarize(total = sum(n))
+
+g <- ggplot(df, aes(x = Q11_8A, y = Percent, fill = Income)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste(format(
+    round(Percent, 1), nsmall = 1
+  ), "%"), y = Percent),
+  position = position_stack(vjust = 0.5)) +
+  geom_text(aes(
+    x = Q11_8A,
+    y = 102,
+    label = paste("Total: ", total),
+    fill = NULL
+  ), data = totals) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black"),
+    text = element_text(family = "Helvetica",
+                        size = 20),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "Experienced Heat Symptoms by Income", y = "Percentage", fill = "Income") +
+  scale_fill_brewer(palette = "RdYlGn", na.value = "grey") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1))
+
+g
+
+ggsave("images/experienced_heat_symptoms_income.png", height = 7, width = 10)
+
+
+#Tree Cover in the Community
+
+df <- data20 %>% drop_na(Q10_1C) %>% group_by(Q10_1C) %>% count(Race) 
+
+df<- arrange(df, n)
+
+g <- ggplot(df, aes(x = Q10_1C, y = n, fill = Race)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black"),
+    text = element_text(family = "Helvetica",
+                        size = 20),
+    axis.title.y = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    #legend.position = "none", 
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "What is the tree cover like \n in your community now?", y = "Count", fill = "Race/Ethnicity") +
+  scale_fill_manual(values = colors, na.value = "grey")
+  
+
+g
+
+ggsave("images/tree_cover.png", height = 7, width = 14)
+
+#tree cover percentage wise
+df <-
+  data44 %>% group_by(Q10_1C) %>% count(Race) %>% mutate(Percent = n / sum(n) *
+                                                            100)
+
+totals <- df %>% group_by(Q10_1C) %>% summarize(total = sum(n))
+
+
+theme_set(theme_classic())
+
+g <- ggplot(df, aes(x = Q10_1C, y = Percent, fill = Race)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste(format(
+    round(Percent, 1), nsmall = 1
+  ), "%"), y = Percent),
+  position = position_stack(vjust = 0.5)) +
+  geom_text(aes(
+    x = Q10_1C,
+    y = 105,
+    label = paste("Total: ", total),
+    fill = NULL
+  ), data = totals) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black"),
+    text = element_text(family = "Helvetica",
+                        size = 20),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "What is the tree cover like \n in your community now?", y = "Percentage", fill = "Race/Ethnicity") +
+  scale_fill_manual(values = colors, na.value = "grey") +
+  coord_flip() +
+  scale_y_continuous(labels = scales::percent_format(scale = 1))
+
+g
+
+ggsave("images/tree_cover_percentage.png", height = 7, width = 14)
 ```

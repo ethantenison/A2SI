@@ -7,7 +7,7 @@ library(haven)
 library(did)
 library(stats)
 library(skimr)
-#library(rddtools)
+#library(rddtools) doesn't work for newer versions of R
 library(stargazer)
 library(MatchIt)
 library(PowerUpR)
@@ -49,6 +49,7 @@ library(readr)
 library(plotly)
 library(data.table)
 library(magrittr)
+library(RColorBrewer)
 
 
 #load data
