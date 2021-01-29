@@ -218,7 +218,7 @@ data20$Q2_2 <-
 #Reasons you feel unsafe
 data20$Q2_3_A1 = car::recode(
   data20$Q2_3_A1,
-  "1 = 'Lack of sidewalks'; 2 = 'Cars/trucks driving too fast'; 3 ='Too many cars'; 88='Other'; 98='NA'"
+  "1 = 'Lack of sidewalks'; 2 = 'Cars/trucks driving too fast'; 4 ='Too many cars';3 = 'Cars/trucks driving too fast', 88='Other'; 98='NA'"
 )
 
 #safe parks
@@ -649,6 +649,9 @@ reasons_unsafe <-
   data44 %>% count(Q2_3_A1) %>% na.omit() %>% mutate(Percent = n / sum(n) *
                                                             100, one_bar = "bar") 
 
+reasons_unsafe <- arrange(reasons_unsafe, Percent)
+reasons_unsafe$Q2_3_A1 <- factor(reasons_unsafe$Q2_3_A1, levels = reasons_unsafe$Q2_3_A1)
+
 totals <- reasons_unsafe %>% group_by(Q2_3_A1) %>% summarize(total = sum(n))
 
 g <- ggplot(reasons_unsafe, aes(x = one_bar, y = Percent, fill = Q2_3_A1)) +
@@ -670,39 +673,21 @@ g <- ggplot(reasons_unsafe, aes(x = one_bar, y = Percent, fill = Q2_3_A1)) +
     axis.text.y=element_blank(),
     axis.ticks = element_blank(),
     plot.title = element_text(hjust = 0.5),
-    plot.margin = margin(10, 10, 10, 10)
+    plot.margin = margin(10, 10, 10, 10),
+    legend.title = element_blank(),
     
   ) +
   labs(title = "Reasons for feeling unsafe", y = "Percentage", fill = "Reasons") +
   scale_fill_manual(values = colors, na.value = "grey") +
   scale_y_continuous(labels = scales::percent_format(scale = 1)) +
-  coord_flip()
+  coord_flip() +
+  guides(fill = guide_legend(reverse = TRUE))
 
 g
 
 ggsave("images/reasons_for_feeling_unsafe.png", height = 2, width = 10)
 
 #safe parks
-table(data44$Q2_4A)
-
-ggplot(data = data44) +
-  geom_bar(
-    mapping = aes(x = Q2_4A, y = ..prop.., group = 1),
-    fill = "darkred",
-    stat = "count"
-  ) +
-  scale_y_continuous(limits = c(0, 0.9),
-                     labels = scales::percent_format()) +
-  theme(panel.background = element_blank(),
-        plot.background = element_blank(),
-        axis.text = element_text(size = 13, face = "bold"),
-        axis.title = element_text(size = 12, face = "bold")
-        ) +
-  scale_x_discrete(guide = guide_axis(n.dodge = 3)) +
-  ylab("Percentage in 78744") +
-  labs(title = "There are safe parks or playgrounds in my neighborhood")
-
-
 safe_parks <-
   data44 %>% count(Q2_4A) %>% na.omit() %>% mutate(Percent = n / sum(n) *
                                                             100, one_bar = "bar") 
@@ -736,7 +721,7 @@ g <- ggplot(safe_parks, aes(x = one_bar, y = Percent, fill = Q2_4A)) +
   scale_fill_manual(values = colors, na.value = "grey") +
   scale_y_continuous(labels = scales::percent_format(scale = 1)) +
   coord_flip() +
-  scale_linetype_manual(guide = guide_legend(reverse = TRUE))
+  guides(fill = guide_legend(reverse = TRUE))
 
 g
 
@@ -941,7 +926,241 @@ ggsave("images/after_school.png",
        width = 20)
 
 
+#Access to Education/Development
+access_education <-
+  data20 %>% group_by(Q5_2) %>% count(Race) %>% na.omit() %>%
+  mutate(Percent = n / sum(n) * 100)
 
+g <- ggplot(access_education, aes(x = Race, y = Percent, fill = Race)) +
+  geom_bar(stat = 'identity') +
+  facet_grid(cols = vars(Q5_2)) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    strip.background = element_blank(),
+    panel.spacing = unit(4, "lines"),
+    text = element_text(family = "Helvetica",
+                        size = 16),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    plot.title = element_text(hjust = 0.5, vjust = 2),
+    
+    legend.title = element_blank(),
+    legend.position = "none",
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "Access to Education/Development",
+  y = "Percentage",
+  fill = "Race") +
+  scale_fill_manual(values = colors, na.value = "grey") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+  scale_linetype_manual(guide = guide_legend(reverse = TRUE))
+
+g
+
+ggsave("images/access_education.png",
+       height = 5,
+       width = 20)
+
+#How would you rate your health?
+rate_health <-
+  data20 %>% group_by(Q8_2) %>% count(Race) %>% na.omit() %>%
+  mutate(Percent = n / sum(n) * 100)
+
+g <- ggplot(rate_health, aes(x = Race, y = Percent, fill = Race)) +
+  geom_bar(stat = 'identity') +
+  facet_grid(cols = vars(Q8_2)) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    strip.background = element_blank(),
+    panel.spacing = unit(4, "lines"),
+    text = element_text(family = "Helvetica",
+                        size = 16),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    plot.title = element_text(hjust = 0.5, vjust = 2),
+    
+    legend.title = element_blank(),
+    legend.position = "none",
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "How would you rate your health?",
+  y = "Percentage",
+  fill = "Race") +
+  scale_fill_manual(values = colors, na.value = "grey") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+  scale_linetype_manual(guide = guide_legend(reverse = TRUE))
+
+g
+
+ggsave("images/rate_health.png",
+       height = 5,
+       width = 20)
+
+#Over past 12 months have health insurance
+health_insurance <-
+  data20 %>% group_by(Q8_5) %>% count(Race) %>% na.omit() %>%
+  mutate(Percent = n / sum(n) * 100)
+
+g <- ggplot(health_insurance , aes(x = Race, y = Percent, fill = Race)) +
+  geom_bar(stat = 'identity') +
+  facet_grid(cols = vars(Q8_5)) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    strip.background = element_blank(),
+    panel.spacing = unit(4, "lines"),
+    text = element_text(family = "Helvetica",
+                        size = 16),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    plot.title = element_text(hjust = 0.5, vjust = 2),
+    
+    legend.title = element_blank(),
+    legend.position = "none",
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "Over the past 12 months did you not have health insurance/coverage?",
+  fill = "Race") +
+  scale_fill_manual(values = colors, na.value = "grey") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+  scale_linetype_manual(guide = guide_legend(reverse = TRUE))
+
+g
+
+ggsave("images/health_insurance.png",
+       height = 5,
+       width = 20)
+
+#Why no insurance? 
+why_no_insurance <-
+  data20 %>% group_by(Q8_6) %>% count(Race) %>% na.omit() %>%
+  mutate(Percent = n / sum(n) * 100)
+
+theme_set(theme_bw())
+g <- ggplot(why_no_insurance , aes(x = Race, y = Percent, fill = Race)) +
+  geom_bar(stat = 'identity') +
+  facet_wrap(~Q8_6) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    strip.background = element_blank(),
+    panel.spacing = unit(4, "lines"),
+    text = element_text(family = "Helvetica",
+                        size = 16),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_text(vjust = -4, size = 20),
+    axis.text.x = element_blank(),
+    axis.title.y = element_text(vjust = 4, size = 20),
+    plot.title = element_text(hjust = 0.5, vjust = 4, size = 20),
+    legend.title = element_text(size = 20),
+    plot.margin = margin(20, 20, 20, 20)
+    
+  ) +
+  labs(title = "Why did you not have health insurance?",
+  fill = "Race/Ethnicity", y = "Percentage of Respondents", x = "Race/Ethnicity") +
+  scale_fill_manual(values = colors, na.value = "grey") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+  scale_linetype_manual(guide = guide_legend(reverse = TRUE))
+
+g
+
+ggsave("images/why_no_insurance.png",
+       height = 10,
+       width = 17)
+
+
+#Lost job
+lost_job <-
+  data20 %>% group_by(Q8_6_lostjob) %>% count(Race) %>% na.omit() %>% mutate(Percent = n / sum(n) *100, one_bar = "bar") 
+
+lost_job <- arrange(lost_job, Percent)
+lost_job$Race <- factor(lost_job$Race, levels = lost_job$Race)
+
+theme_set(theme_classic())
+g <- ggplot(lost_job, aes(x = Q8_6_lostjob, y = Percent, fill = Race)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste(format(
+    round(Percent, 1), nsmall = 1
+  ), "%" ,"\n", n, "    "), y = Percent),
+  position = position_stack(vjust = 0.5)) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    text = element_text(family = "Helvetica",
+                        size = 16),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.line=element_blank(),
+    axis.text.x=element_blank(),
+    axis.text.y=element_blank(),
+    axis.ticks = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    legend.title = element_blank(),
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "Lost Employment by Race/Ethnicity", fill = "Race/Ethnicity") +
+  scale_fill_manual(values = colors, na.value = "grey") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+  coord_flip() +
+  guides(fill = guide_legend(reverse = TRUE))
+
+g
+
+ggsave("images/lost_job.png", height = 2, width = 10)
+
+
+#Couldn't afford premium
+premium <-
+  data20 %>% group_by(Q8_6_couldnotaffordpremium) %>% count(Race) %>% na.omit() %>% mutate(Percent = n / sum(n) *100, one_bar = "bar") 
+
+premium <- arrange(premium, Percent)
+premium$Race <- factor(premium$Race, levels = premium$Race)
+
+g <- ggplot(premium, aes(x = Q8_6_couldnotaffordpremium, y = Percent, fill = Race)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste(format(
+    round(Percent, 1), nsmall = 1
+  ), "%" ,"\n", n, "    "), y = Percent),
+  position = position_stack(vjust = 0.5)) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    text = element_text(family = "Helvetica",
+                        size = 16),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.line=element_blank(),
+    axis.text.x=element_blank(),
+    axis.text.y=element_blank(),
+    axis.ticks = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    legend.title = element_blank(),
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "Couldn't Afford Premium", fill = "Race/Ethnicity") +
+  scale_fill_manual(values = colors, na.value = "grey") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+  coord_flip() +
+  guides(fill = guide_legend(reverse = TRUE))
+
+g
+
+ggsave("images/couldnt_afford_premium.png", height = 2, width = 10)
 
 
 ```
