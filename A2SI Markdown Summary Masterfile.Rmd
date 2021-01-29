@@ -218,7 +218,7 @@ data20$Q2_2 <-
 #Reasons you feel unsafe
 data20$Q2_3_A1 = car::recode(
   data20$Q2_3_A1,
-  "1 = 'Lack of sidewalks'; 2 = 'Cars/trucks driving too fast'; 4 ='Too many cars';3 = 'Cars/trucks driving too fast', 88='Other'; 98='NA'"
+  "1 = 'Lack of sidewalks'; 2 = 'Cars/trucks driving too fast'; 4 ='Too many cars';3 = 'Cars/trucks driving too fast'; 88='Other'; 98='NA'"
 )
 
 #safe parks
@@ -438,7 +438,7 @@ table(data44$Q12_4_OTH)
 #GAVA programs and resources
 data44$Q12_5_A1 = car::recode(
   data44$Q12_5_A1,
-  "1 = 'Helped me get a program or service in my neighborhood or school'; 2 = 'NA'; 3 ='Provided cash or food assistance'; 4='NA';5='Connected me to another organization or resource that I needed'; 6 = 'NA'; 7 = 'Supported my neighborhoods disaster preparedness'; 88 ='Other'; 98='NA'"
+  "1 = 'Helped me get a program or service \n in my neighborhood or school'; 2 = 'NA'; 3 ='Provided cash or food assistance'; 4='NA';5='Connected me to another organization \n or resource that I needed'; 6 = 'NA'; 7 = 'Supported my neighborhoods \n disaster preparedness'; 88 ='Other'; 98='NA'"
 )
 
 table(data44$Q12_5_A1)
@@ -499,6 +499,72 @@ g
 
 ggsave("images/how_familiar.png", height = 7, width = 10)
 
+
+#How do you know about Gava? 
+how_do_you_know <- data44 %>% drop_na(Q12_4_A1) %>% group_by(Q12_4_A1) %>% count(Q12_4_A1) 
+
+how_do_you_know <- arrange(how_do_you_know, n)
+how_do_you_know$Q12_4_A1 <- factor(how_do_you_know$Q12_4_A1, levels = how_do_you_know$Q12_4_A1)
+
+g <- ggplot(how_do_you_know, aes(x = Q12_4_A1, y = n, fill = Q12_4_A1)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black"),
+    text = element_text(family = "Helvetica",
+                        size = 20),
+    axis.title.y = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "none", 
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "How did you hear about GAVA?", y = "Count", fill = "Race") +
+  scale_fill_manual(values = colors, na.value = "grey")
+  
+
+g
+
+ggsave("images/how_did_you_hear_about_gava.png", height = 7, width = 14)
+
+#What resources have you received?
+resources_received <- data44 %>% drop_na(Q12_5_A1) %>% group_by(Q12_5_A1) %>% count(Q12_5_A1) 
+
+resources_received$Q12_5_A1[resources_received$Q12_5_A1 == "Helped me get a program or service in my neighborhood or school"] <- "Helped me get a program or service \n in  my neighborhood or school"
+
+resources_received$Q12_5_A1[resources_received$Q12_5_A1 == "Connected me to another organization or resource that I needed"] <- "Connected me to another organization \n or resource that I needed"
+
+resources_received$Q12_5_A1[resources_received$Q12_5_A1 == "Supported my neighborhoods disaster preparedness"] <- "Supported my neighborhoods \n disaster preparedness"
+
+resources_received <- arrange(resources_received, n)
+resources_received$Q12_5_A1 <- factor(resources_received$Q12_5_A1, levels = resources_received$Q12_5_A1)
+
+g <- ggplot(resources_received, aes(x = Q12_5_A1, y = n, fill = Q12_5_A1)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black"),
+    text = element_text(family = "Helvetica",
+                        size = 20),
+    axis.title.y = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "none", 
+    plot.margin = margin(10, 10, 10, 10)
+    
+  ) +
+  labs(title = "What programs, resources, information,\n or other support have you received from or through GAVA?", y = "Count", fill = "Race") +
+  scale_fill_manual(values = colors, na.value = "grey")
+  
+
+g
+
+ggsave("images/what_resources.png", height = 7, width = 14)
 
 ```
 
